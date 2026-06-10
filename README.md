@@ -45,13 +45,6 @@ mysh> wc < files.txt
 - `waitpid()`
 
 ## Demo
+<img width="465" height="668" alt="Screenshot 2026-06-11 001701" src="https://github.com/user-attachments/assets/bd2b6647-887f-4b66-852a-ccf4e9187709" />
 
----
 
-## Learning Milestone
-
-This version implements the fundamental Unix shell execution cycle:
-
-**Read → Parse → Fork → Exec → Wait → Repeat**
-
-All future features—including redirection, pipelines, job control, and command substitution—will build upon this execution model.
