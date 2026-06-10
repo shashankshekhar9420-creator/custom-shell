@@ -49,13 +49,5 @@ mysh> ls | wc -l
 * No job control
 
 ## Demo
+<img width="451" height="197" alt="Screenshot 2026-06-11 020801" src="https://github.com/user-attachments/assets/95907b9f-2e3f-4132-86ce-d822e6f885bd" />
 
----
-
-## Learning Milestone
-
-This version implements the fundamental Unix shell execution cycle:
-
-**Read → Parse → Fork → Exec → Wait → Repeat**
-
-All future features—including redirection, pipelines, job control, and command substitution—will build upon this execution model.
