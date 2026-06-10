@@ -1,72 +1,47 @@
-# Custom Shell v0.1
+# Custom Shell v0.2
 
-The first executable version of the shell.
+This milestone introduces process creation, program execution, and I/O redirection.
 
-This milestone extends the initial REPL by introducing process creation and program execution.
-The shell runs external commands using fork(), exec(), wait() execution model used by UNIX.
+## Added
 
----
+- Command tokenization using `strtok_r()`
+- Process creation with `fork()`
+- Program execution with `execvp()`
+- Parent-child synchronization using `waitpid()`
+- Input redirection (`<`)
+- Output redirection (`>`)
+- Output append redirection (`>>`)
+- Child exit status reporting
 
-## Features
+## Examples
+### Redirect output
 
-- Interactive shell prompt using GNU Readline
-- Read-Eval-Print Loop (REPL)
-- Execute external programs using `fork()` and `execvp()`
-- Parent process synchronization using `waitpid()`
-- Display child process exit status
-- Built-in `exit` command
-- Graceful exit on `Ctrl+D`
+```text
+mysh> ls > files.txt
+```
 
----
+### Append output
 
-## Current Limitations
+```text
+mysh> ls >> files.txt
+```
 
-- Executes only one command at a time
-- No pipelines (`|`)
-- No input/output redirection (`<`, `>`, `>>`)
-- No background execution (`&`)
-- No command chaining (`;`, `&&`, `||`)
-- No built-in `cd`
+### Redirect input
 
-These features will be implemented in future versions.
-
----
+```text
+mysh> wc < files.txt
+```
 
 ## Concepts Implemented
 
-- Command-line tokenization using `strtok_r()`
-- Construction of `argv` arrays
-- Process creation with `fork()`
-- Program execution with `execvp()`
-- Parent-child synchronization with `waitpid()`
-- Exit status handling using `WIFEXITED()` and `WEXITSTATUS()`
-
----
-
-## Build
-
-```bash
-gcc main.c -o mysh -lreadline
-```
-
----
-
-## Run
-
-```bash
-./mysh
-```
-
----
+- Argument vector construction
+- File descriptor manipulation
+- Command parsing with `strtok_r()`
+- `open()`
+- `dup2()`
+- `close()`
+- `fork()`
+- `execvp()`
+- `waitpid()`
 
 ## Demo
-
----
-
-## Learning Milestone
-
-This version implements the fundamental Unix shell execution cycle:
-
-**Read → Parse → Fork → Exec → Wait → Repeat**
-
-All future features—including redirection, pipelines, job control, and command substitution—will build upon this execution model.
