@@ -50,3 +50,12 @@ mysh> ls | wc -l
 
 ## Demo
 
+---
+
+## Learning Milestone
+
+This version implements the fundamental Unix shell execution cycle:
+
+**Read → Parse → Fork → Exec → Wait → Repeat**
+
+All future features—including redirection, pipelines, job control, and command substitution—will build upon this execution model.
