@@ -25,132 +25,140 @@ int main(){
         }
         
         //step 1: Tokenization
-        char *argv[MAX_ARGS];
-        int argc=0;
+        char *argv1[MAX_ARGS];
+        int argc1=0;
+        char *argv2[MAX_ARGS];
+        int argc2=0;
 
-        char *input_file=NULL;
-        char *output_file=NULL;
-        int append=0;
-
-        int parse_error=0;
+        int pipe_found=0;
 
         char *saveptr;
         char *token=strtok_r(line," ",&saveptr);
         
         while(token!=NULL){
-            if(strcmp(token,">")==0){
-                token=strtok_r(NULL," ",&saveptr);
-
-                if(token==NULL){
-                    printf("Syntax error: expected filename after >\n");
-                    parse_error=1;
+            //found pipe symbol
+            if(strcmp(token,"|")==0){
+                if(pipe_found){
+                    printf("This version supports only one pipe.\n");
                     break;
                 }
-
-                // > means output redirection (TRUNC)
-                output_file=token;
-                append=0; // 0 means TRUNC
+                pipe_found=1;
             }
-            else if(strcmp(token,">>")==0){
-                token=strtok_r(NULL," ",&saveptr);
 
-                if(token==NULL){
-                    printf("Syntax error: expected filename after >>\n");
-                    parse_error=1;
-                    break;
-                }
-                
-                // >> means output redirection again (APPEND)
-                output_file=token;
-                append=1; //1 means APPEND
-            }
-            else if(strcmp(token,"<")==0){
-                token=strtok_r(NULL," ",&saveptr);
-
-                
-                if(token==NULL){
-                    printf("Syntax error: expected filename after <\n");
-                    parse_error=1;
-                    break;
-                }
-                //< input redirection
-                input_file=token;
-            }
             else{
-                if(argc<MAX_ARGS-1){
-                    //we don't pass redirection symbols in the argument array
-                    argv[argc++]=token;
+                //before finding the pipe symbol
+                //that means we are dealing with the first argument
+                if(pipe_found==0){
+                    if(argc1<MAX_ARGS-1)
+                    argv1[argc1++]=token;
+                    else
+                    printf("Too many arguments\n");
+                }
+                //after finding the pipe symbol
+                //that means we are dealing with the second argument
+                else{
+                    if(argc2<MAX_ARGS-1)
+                    argv2[argc2++]=token;
+                    else
+                    printf("Too many arguments\n");
                 }
             }
             token=strtok_r(NULL," ",&saveptr);
         }
-        argv[argc]=NULL; //making sure that the last agrument is NULL (for execvp)
-        
-        if(parse_error){
+        argv1[argc1]=NULL; //making sure that the last agrument is NULL (for execvp)
+        argv2[argc2]=NULL;
+
+        //check for invalid pipe
+        if(pipe_found && (argc1==0 || argc2==0)){
+            printf("Syntax error near |\n");
             free(line);
             continue;
         }
 
-        //if the entered command is only spaces
-        if(argc==0){
+        //normal command- without pipe
+        if(pipe_found==0){
+            //create the child process
+            pid_t pid=fork();
+            if(pid<0){
+                perror("fork");
+                free(line);
+                continue;
+            }
+
+            //child process
+            if(pid==0){
+                execvp(argv1[0],argv1);
+                //will reach here only if exec() fails
+                perror("execvp");
+                exit(127);
+            }
+
+            //parent process
+            waitpid(pid,NULL,0);
             free(line);
             continue;
         }
-        //step 2: fork
-        pid_t pid=fork();
-        if(pid<0){
+
+        //with pipe
+        //creating pipe object before fork() so that it is inherited by the child processes
+        int pipefd[2];
+        //pipefd[0] is the read end- child 2 reads from it
+        //pipefd[1] is the write end- child 1 writes into it
+        if(pipe(pipefd)==-1){
+            perror("pipe");
+            free(line);
+            continue;
+        }
+        //create the first child process
+        pid_t pid1=fork();
+        if(pid1<0){
             perror("fork");
             free(line);
             continue;
         }
+        //inside the first child process
+        if(pid1==0){
+            //rewire the first child
+            dup2(pipefd[1],STDOUT_FILENO);
+            close(pipefd[1]);
+            close(pipefd[0]);
 
-        //child process (its program will be replaced by execvp())
-        if(pid==0){
-            //apply redirections before execution
-            if(input_file!=NULL){
-                int fd=open(input_file,O_RDONLY);
-                if(fd<0){
-                    perror(input_file);
-                    exit(1);
-                }
-                //manipulating the flow of data
-                dup2(fd,STDIN_FILENO);
-                close(fd);
-            }
-            if(output_file!=NULL){
-                int fd;
-                if(append){
-                    //this will be >> APPEND redirection
-                    fd=open(output_file,O_WRONLY | O_CREAT | O_APPEND, 0644);
-                }
-                else{
-                    //this will be > TRUNC redirection
-                    fd=open(output_file,O_WRONLY | O_CREAT | O_TRUNC, 0644);
-                }
-                if(fd<0){
-                    perror(output_file);
-                    exit(1);
-                }
-                dup2(fd,STDOUT_FILENO);
-                close(fd);
-            }
-            execvp(argv[0],argv);
-            //this line will only be reached if execvp() fails
+            //execute command
+            execvp(argv1[0],argv1);
+
             perror("execvp");
-            //127 means command not found
+            free(line);
             exit(127);
         }
 
-        //parent process (should wait for the child process to finish)
-        int status;
-        if(waitpid(pid,&status,0)==-1){
-            perror("waitpid");
+        //create the second child process
+        pid_t pid2=fork();
+        if(pid2<0){
+            perror("fork");
+            free(line);
+            continue;
         }
-        //check if the child terminated normally
-        else if(WIFEXITED(status)){
-            //collect exit code
-            printf("Exit code: %d\n",WEXITSTATUS(status));
+        //inside the second child process
+        if(pid2==0){
+            //rewire the second child
+            dup2(pipefd[0],STDIN_FILENO);
+            close(pipefd[0]);
+            close(pipefd[1]);
+
+            //execute command
+            execvp(argv2[0],argv2);
+
+            perror("execvp");
+            free(line);
+            exit(127);
         }
+
+        //inside the parent process
+        close(pipefd[0]);
+        close(pipefd[1]);
+
+        waitpid(pid1,NULL,0);
+        waitpid(pid2,NULL,0);
         free(line);
     }
     return 0;
