@@ -1,57 +1,52 @@
-# Custom Shell v0.2
+# Custom Shell v0.3
 
-This milestone introduces process creation, program execution, and I/O redirection.
+This milestone introduces Unix pipelines.
+
+Commands can now communicate through a pipe, allowing the output of one process to become the input of another.
 
 ## Added
 
-- Command tokenization using `strtok_r()`
-- Process creation with `fork()`
-- Program execution with `execvp()`
-- Parent-child synchronization using `waitpid()`
-- Input redirection (`<`)
-- Output redirection (`>`)
-- Output append redirection (`>>`)
-- Child exit status reporting
+* Single pipe (`|`) support
+* Creation of anonymous pipes using `pipe()`
+* Two-child process execution model
+* Inter-process communication through file descriptors
+* Input/output stream rewiring using `dup2()`
 
 ## Examples
-### Redirect output
+
+### List files and filter output
 
 ```text
-mysh> ls > files.txt
+mysh> ls | grep main
+main
+main.c
 ```
 
-### Append output
+### Count files
 
 ```text
-mysh> ls >> files.txt
-```
-
-### Redirect input
-
-```text
-mysh> wc < files.txt
+mysh> ls | wc -l
 ```
 
 ## Concepts Implemented
 
-- Argument vector construction
-- File descriptor manipulation
-- Command parsing with `strtok_r()`
-- `open()`
-- `dup2()`
-- `close()`
-- `fork()`
-- `execvp()`
-- `waitpid()`
+* `pipe()`
+* `fork()`
+* `execvp()`
+* `dup2()`
+* `close()`
+* Parent-child process coordination
+* File descriptor inheritance
+* Inter-process communication (IPC)
+
+## Current Limitations
+
+* Supports only one pipe
+* No multiple pipelines (`cmd1 | cmd2 | cmd3`)
+* No redirection combined with pipelines
+* No background jobs (`&`)
+* No signal handling
+* No job control
 
 ## Demo
 
----
-
-## Learning Milestone
-
-This version implements the fundamental Unix shell execution cycle:
-
-**Read → Parse → Fork → Exec → Wait → Repeat**
-
-All future features—including redirection, pipelines, job control, and command substitution—will build upon this execution model.
