@@ -60,6 +60,7 @@ gcc main.c -o mysh -lreadline
 ---
 
 ## Demo
+<img width="708" height="324" alt="Screenshot 2026-06-10 192112" src="https://github.com/user-attachments/assets/023c122c-3825-4d39-9d05-24ce90712d7e" />
 
 ---
 
@@ -69,4 +70,4 @@ This version implements the fundamental Unix shell execution cycle:
 
 **Read → Parse → Fork → Exec → Wait → Repeat**
 
-All future features—including redirection, pipelines, job control, and command substitution—will build upon this execution model.
+All future features including redirection, pipelines, job control, and command substitution will build upon this execution model.
